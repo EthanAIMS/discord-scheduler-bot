@@ -1,0 +1,7 @@
+{
+  "token": "YOUR_DISCORD_BOT_TOKEN",
+  "clientId": "YOUR_CLIENT_ID",
+  "guildId": "YOUR_GUILD_ID",
+  "supabaseUrl": "https://fmzmgwswcurahxbpygpw.supabase.co",
+  "supabaseKey": "YOUR_SUPABASE_KEY"
+}

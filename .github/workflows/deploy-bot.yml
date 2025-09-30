@@ -1,0 +1,48 @@
+name: Deploy Bot to GCP
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'bot/**'
+      - '.github/workflows/deploy-bot.yml'
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+      
+      - name: Deploy to GCP VM
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: 35.236.75.172
+          username: ethan
+          key: ${{ secrets.GCP_SSH_KEY }}
+          script: |
+            cd ~/discord-bot
+            
+            # Pull latest code
+            if [ -d ".git" ]; then
+              git pull origin main
+            else
+              git clone https://github.com/EthanAIMS/discord-scheduler-bot.git temp
+              cp -r temp/bot/* .
+              rm -rf temp
+            fi
+            
+            # Install dependencies if package.json changed
+            npm install
+            
+            # Restart bot using PM2 (or pkill/start if not using PM2)
+            if command -v pm2 &> /dev/null; then
+              pm2 restart bot || pm2 start bot.js --name bot
+            else
+              pkill -f "node bot.js" || true
+              nohup node bot.js > bot.log 2>&1 &
+            fi
+            
+            echo "Bot deployed successfully!"
