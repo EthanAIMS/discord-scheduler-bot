@@ -25,14 +25,8 @@ jobs:
           script: |
             cd ~/discord-bot
             
-            # Pull latest code
-            if [ -d ".git" ]; then
-              git pull origin main
-            else
-              git clone https://github.com/EthanAIMS/discord-scheduler-bot.git temp
-              cp -r temp/bot/* .
-              rm -rf temp
-            fi
+            # Pull latest code from bot directory in repo
+            curl -L https://github.com/EthanAIMS/discord-scheduler-bot/archive/refs/heads/main.tar.gz | tar xz --strip-components=2 discord-scheduler-bot-main/bot
             
             # Install dependencies if package.json changed
             npm install
