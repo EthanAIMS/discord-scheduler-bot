@@ -28,8 +28,12 @@ jobs:
           script: |
             cd ~/discord-bot
             
-            # Pull latest code from bot directory in repo (with PAT authentication)
-            curl -L -H "Authorization: token $GH_PAT" https://github.com/EthanAIMS/discord-scheduler-bot/archive/refs/heads/main.tar.gz | tar xz --strip-components=2 discord-scheduler-bot-main/bot
+            # Clean directory to avoid conflicts
+            rm -rf *
+            rm -rf .git
+            
+            # Download latest code from bot directory
+            curl -L https://github.com/EthanAIMS/discord-scheduler-bot/archive/refs/heads/main.tar.gz | tar xz --strip-components=2 discord-scheduler-bot-main/bot
             
             # Install dependencies if package.json changed
             npm install
