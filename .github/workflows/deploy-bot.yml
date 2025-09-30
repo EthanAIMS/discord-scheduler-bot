@@ -22,11 +22,14 @@ jobs:
           host: 35.236.75.172
           username: ethan
           key: ${{ secrets.GCP_SSH_KEY }}
-          script: |
+          envs: GITHUB_TOKEN
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        script: |
             cd ~/discord-bot
             
-            # Pull latest code from bot directory in repo
-            curl -L https://github.com/EthanAIMS/discord-scheduler-bot/archive/refs/heads/main.tar.gz | tar xz --strip-components=2 discord-scheduler-bot-main/bot
+            # Pull latest code from bot directory in repo (with authentication)
+            curl -L -H "Authorization: token $GITHUB_TOKEN" https://github.com/EthanAIMS/discord-scheduler-bot/archive/refs/heads/main.tar.gz | tar xz --strip-components=2 discord-scheduler-bot-main/bot
             
             # Install dependencies if package.json changed
             npm install
