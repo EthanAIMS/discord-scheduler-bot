@@ -1,0 +1,106 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers":
+    "authorization, x-client-info, apikey, content-type",
+};
+
+serve(async (req) => {
+  if (req.method === "OPTIONS") {
+    return new Response(null, { headers: corsHeaders });
+  }
+
+  try {
+    const supabaseClient = createClient(
+      Deno.env.get("SUPABASE_URL") ?? "",
+      Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? ""
+    );
+
+    const url = new URL(req.url);
+    const path = url.pathname.split("/").pop();
+
+    switch (path) {
+      case "commands": {
+        // Get all enabled commands
+        const { data, error } = await supabaseClient
+          .from("bot_commands")
+          .select("*")
+          .eq("is_enabled", true)
+          .order("command_name");
+
+        if (error) throw error;
+
+        return new Response(JSON.stringify({ commands: data }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      case "log-command": {
+        // Log command execution
+        const { command_id, server_id, user_discord_id, success, error_message } =
+          await req.json();
+
+        const { error } = await supabaseClient.from("command_logs").insert([
+          {
+            command_id,
+            server_id,
+            user_discord_id,
+            success,
+            error_message,
+          },
+        ]);
+
+        if (error) throw error;
+
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      case "servers": {
+        // Get all active servers
+        const { data, error } = await supabaseClient
+          .from("discord_servers")
+          .select("*")
+          .eq("is_active", true);
+
+        if (error) throw error;
+
+        return new Response(JSON.stringify({ servers: data }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      case "ping": {
+        // Simple health check endpoint
+        return new Response(
+          JSON.stringify({
+            status: "ok",
+            timestamp: new Date().toISOString(),
+          }),
+          {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+
+      default:
+        return new Response(JSON.stringify({ error: "Endpoint not found" }), {
+          status: 404,
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+    }
+  } catch (error) {
+    console.error("Error in bot-api:", error);
+    const errorMessage = error instanceof Error ? error.message : "Internal server error";
+    return new Response(
+      JSON.stringify({ error: errorMessage }),
+      {
+        status: 500,
+        headers: { ...corsHeaders, "Content-Type": "application/json" },
+      }
+    );
+  }
+});
