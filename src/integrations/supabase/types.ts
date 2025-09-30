@@ -50,6 +50,27 @@ export type Database = {
         }
         Relationships: []
       }
+      bot_status: {
+        Row: {
+          id: string
+          is_active: boolean
+          updated_at: string
+          updated_by: string | null
+        }
+        Insert: {
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Update: {
+          id?: string
+          is_active?: boolean
+          updated_at?: string
+          updated_by?: string | null
+        }
+        Relationships: []
+      }
       command_logs: {
         Row: {
           command_id: string | null
