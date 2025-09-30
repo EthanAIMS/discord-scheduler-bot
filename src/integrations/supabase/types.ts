@@ -14,16 +14,216 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      bot_commands: {
+        Row: {
+          command_name: string
+          command_type: string
+          created_at: string
+          created_by: string | null
+          description: string
+          id: string
+          is_admin_only: boolean
+          is_enabled: boolean
+          updated_at: string
+        }
+        Insert: {
+          command_name: string
+          command_type?: string
+          created_at?: string
+          created_by?: string | null
+          description: string
+          id?: string
+          is_admin_only?: boolean
+          is_enabled?: boolean
+          updated_at?: string
+        }
+        Update: {
+          command_name?: string
+          command_type?: string
+          created_at?: string
+          created_by?: string | null
+          description?: string
+          id?: string
+          is_admin_only?: boolean
+          is_enabled?: boolean
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      command_logs: {
+        Row: {
+          command_id: string | null
+          error_message: string | null
+          executed_at: string
+          id: string
+          server_id: string | null
+          success: boolean
+          user_discord_id: string
+        }
+        Insert: {
+          command_id?: string | null
+          error_message?: string | null
+          executed_at?: string
+          id?: string
+          server_id?: string | null
+          success?: boolean
+          user_discord_id: string
+        }
+        Update: {
+          command_id?: string | null
+          error_message?: string | null
+          executed_at?: string
+          id?: string
+          server_id?: string | null
+          success?: boolean
+          user_discord_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "command_logs_command_id_fkey"
+            columns: ["command_id"]
+            isOneToOne: false
+            referencedRelation: "bot_commands"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "command_logs_server_id_fkey"
+            columns: ["server_id"]
+            isOneToOne: false
+            referencedRelation: "discord_servers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      discord_servers: {
+        Row: {
+          added_by: string | null
+          created_at: string
+          icon_url: string | null
+          id: string
+          is_active: boolean
+          server_id: string
+          server_name: string
+          updated_at: string
+        }
+        Insert: {
+          added_by?: string | null
+          created_at?: string
+          icon_url?: string | null
+          id?: string
+          is_active?: boolean
+          server_id: string
+          server_name: string
+          updated_at?: string
+        }
+        Update: {
+          added_by?: string | null
+          created_at?: string
+          icon_url?: string | null
+          id?: string
+          is_active?: boolean
+          server_id?: string
+          server_name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      gcp_operations: {
+        Row: {
+          completed_at: string | null
+          created_at: string
+          details: Json | null
+          id: string
+          initiated_by: string | null
+          operation_type: string
+          status: string
+        }
+        Insert: {
+          completed_at?: string | null
+          created_at?: string
+          details?: Json | null
+          id?: string
+          initiated_by?: string | null
+          operation_type: string
+          status?: string
+        }
+        Update: {
+          completed_at?: string | null
+          created_at?: string
+          details?: Json | null
+          id?: string
+          initiated_by?: string | null
+          operation_type?: string
+          status?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string
+          discord_id: string
+          discriminator: string | null
+          id: string
+          updated_at: string
+          username: string
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string
+          discord_id: string
+          discriminator?: string | null
+          id: string
+          updated_at?: string
+          username: string
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string
+          discord_id?: string
+          discriminator?: string | null
+          id?: string
+          updated_at?: string
+          username?: string
+        }
+        Relationships: []
+      }
+      user_roles: {
+        Row: {
+          created_at: string
+          id: string
+          role: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          role?: Database["public"]["Enums"]["app_role"]
+          user_id?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      has_role: {
+        Args: {
+          _role: Database["public"]["Enums"]["app_role"]
+          _user_id: string
+        }
+        Returns: boolean
+      }
     }
     Enums: {
-      [_ in never]: never
+      app_role: "admin" | "user"
     }
     CompositeTypes: {
       [_ in never]: never
@@ -150,6 +350,8 @@ export type CompositeTypes<
 
 export const Constants = {
   public: {
-    Enums: {},
+    Enums: {
+      app_role: ["admin", "user"],
+    },
   },
 } as const
