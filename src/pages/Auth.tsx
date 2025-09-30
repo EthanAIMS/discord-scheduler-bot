@@ -3,13 +3,18 @@ import { useNavigate } from "react-router-dom";
 import { supabase } from "@/integrations/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Bot, Shield } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Bot, Mail } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
 const Auth = () => {
   const navigate = useNavigate();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
 
   useEffect(() => {
     // Check if user is already logged in
@@ -31,21 +36,49 @@ const Auth = () => {
     return () => subscription.unsubscribe();
   }, [navigate]);
 
-  const handleDiscordLogin = async () => {
+  const handleSignIn = async (e: React.FormEvent) => {
+    e.preventDefault();
     try {
       setLoading(true);
-      const { error } = await supabase.auth.signInWithOAuth({
-        provider: "discord",
-        options: {
-          redirectTo: `${window.location.origin}/dashboard`,
-        },
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
       });
 
       if (error) throw error;
     } catch (error: any) {
       toast({
-        title: "Authentication Error",
-        description: error.message || "Failed to sign in with Discord",
+        title: "Sign In Error",
+        description: error.message || "Failed to sign in",
+        variant: "destructive",
+      });
+      setLoading(false);
+    }
+  };
+
+  const handleSignUp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      setLoading(true);
+      const { error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          emailRedirectTo: `${window.location.origin}/dashboard`,
+        },
+      });
+
+      if (error) throw error;
+
+      toast({
+        title: "Success!",
+        description: "Account created! You can now sign in.",
+      });
+      setLoading(false);
+    } catch (error: any) {
+      toast({
+        title: "Sign Up Error",
+        description: error.message || "Failed to create account",
         variant: "destructive",
       });
       setLoading(false);
@@ -74,25 +107,92 @@ const Auth = () => {
           </p>
         </div>
 
-        <div className="relative space-y-4">
-          <Button
-            onClick={handleDiscordLogin}
-            disabled={loading}
-            className="w-full h-12 text-lg font-semibold bg-[#5865F2] hover:bg-[#4752C4] text-white"
-          >
-            {loading ? (
-              "Connecting..."
-            ) : (
-              <>
-                <Shield className="mr-2 h-5 w-5" />
-                Sign in with Discord
-              </>
-            )}
-          </Button>
+        <div className="relative">
+          <Tabs defaultValue="signin" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="signin">Sign In</TabsTrigger>
+              <TabsTrigger value="signup">Sign Up</TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="signin" className="space-y-4">
+              <form onSubmit={handleSignIn} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="signin-email">Email</Label>
+                  <Input
+                    id="signin-email"
+                    type="email"
+                    placeholder="your@email.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signin-password">Password</Label>
+                  <Input
+                    id="signin-password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full"
+                >
+                  {loading ? "Signing in..." : (
+                    <>
+                      <Mail className="mr-2 h-4 w-4" />
+                      Sign In
+                    </>
+                  )}
+                </Button>
+              </form>
+            </TabsContent>
 
-          <div className="text-center text-sm text-muted-foreground">
-            Secure authentication powered by Discord OAuth
-          </div>
+            <TabsContent value="signup" className="space-y-4">
+              <form onSubmit={handleSignUp} className="space-y-4">
+                <div className="space-y-2">
+                  <Label htmlFor="signup-email">Email</Label>
+                  <Input
+                    id="signup-email"
+                    type="email"
+                    placeholder="your@email.com"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="signup-password">Password</Label>
+                  <Input
+                    id="signup-password"
+                    type="password"
+                    placeholder="••••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    minLength={6}
+                  />
+                </div>
+                <Button
+                  type="submit"
+                  disabled={loading}
+                  className="w-full"
+                >
+                  {loading ? "Creating account..." : (
+                    <>
+                      <Mail className="mr-2 h-4 w-4" />
+                      Create Account
+                    </>
+                  )}
+                </Button>
+              </form>
+            </TabsContent>
+          </Tabs>
         </div>
       </Card>
     </div>
