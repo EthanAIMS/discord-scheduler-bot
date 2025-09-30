@@ -19,17 +19,17 @@ jobs:
       - name: Deploy to GCP VM
         uses: appleboy/ssh-action@v1.0.0
         env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          GH_PAT: ${{ secrets.GH_PAT }}
         with:
           host: 35.236.75.172
           username: ethan
           key: ${{ secrets.GCP_SSH_KEY }}
-          envs: GITHUB_TOKEN
+          envs: GH_PAT
           script: |
             cd ~/discord-bot
             
-            # Pull latest code from bot directory in repo (with authentication)
-            curl -L -H "Authorization: token $GITHUB_TOKEN" https://github.com/EthanAIMS/discord-scheduler-bot/archive/refs/heads/main.tar.gz | tar xz --strip-components=2 discord-scheduler-bot-main/bot
+            # Pull latest code from bot directory in repo (with PAT authentication)
+            curl -L -H "Authorization: token $GH_PAT" https://github.com/EthanAIMS/discord-scheduler-bot/archive/refs/heads/main.tar.gz | tar xz --strip-components=2 discord-scheduler-bot-main/bot
             
             # Install dependencies if package.json changed
             npm install
