@@ -14,6 +14,36 @@ export type Database = {
   }
   public: {
     Tables: {
+      available_services: {
+        Row: {
+          created_at: string
+          display_name: string
+          icon_emoji: string
+          id: string
+          is_active: boolean
+          oauth_scope: string
+          service_name: string
+        }
+        Insert: {
+          created_at?: string
+          display_name: string
+          icon_emoji: string
+          id?: string
+          is_active?: boolean
+          oauth_scope: string
+          service_name: string
+        }
+        Update: {
+          created_at?: string
+          display_name?: string
+          icon_emoji?: string
+          id?: string
+          is_active?: boolean
+          oauth_scope?: string
+          service_name?: string
+        }
+        Relationships: []
+      }
       bot_commands: {
         Row: {
           command_name: string
@@ -229,6 +259,53 @@ export type Database = {
           user_id?: string
         }
         Relationships: []
+      }
+      user_service_connections: {
+        Row: {
+          access_token: string | null
+          connected_at: string | null
+          created_at: string
+          id: string
+          is_connected: boolean
+          refresh_token: string | null
+          service_id: string
+          token_expires_at: string | null
+          updated_at: string
+          user_discord_id: string
+        }
+        Insert: {
+          access_token?: string | null
+          connected_at?: string | null
+          created_at?: string
+          id?: string
+          is_connected?: boolean
+          refresh_token?: string | null
+          service_id: string
+          token_expires_at?: string | null
+          updated_at?: string
+          user_discord_id: string
+        }
+        Update: {
+          access_token?: string | null
+          connected_at?: string | null
+          created_at?: string
+          id?: string
+          is_connected?: boolean
+          refresh_token?: string | null
+          service_id?: string
+          token_expires_at?: string | null
+          updated_at?: string
+          user_discord_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "user_service_connections_service_id_fkey"
+            columns: ["service_id"]
+            isOneToOne: false
+            referencedRelation: "available_services"
+            referencedColumns: ["id"]
+          },
+        ]
       }
     }
     Views: {
