@@ -73,6 +73,32 @@ serve(async (req) => {
         });
       }
 
+      case "status": {
+        // Get bot active status
+        const { data, error } = await supabaseClient
+          .from("bot_status")
+          .select("is_active")
+          .limit(1)
+          .single();
+
+        if (error) {
+          // If no status exists, default to active
+          return new Response(
+            JSON.stringify({ isActive: true }),
+            {
+              headers: { ...corsHeaders, "Content-Type": "application/json" },
+            }
+          );
+        }
+
+        return new Response(
+          JSON.stringify({ isActive: data.is_active }),
+          {
+            headers: { ...corsHeaders, "Content-Type": "application/json" },
+          }
+        );
+      }
+
       case "ping": {
         // Simple health check endpoint
         return new Response(
