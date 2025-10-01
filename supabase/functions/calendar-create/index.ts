@@ -84,17 +84,21 @@ serve(async (req) => {
     const supabase = createClient(supabaseUrl, supabaseKey);
 
     // Get user's Google Calendar connection
-    const { data: connection, error: connectionError } = await supabase
+    const { data: connections, error: connectionError } = await supabase
       .from('user_service_connections')
       .select('access_token, service_id, available_services(service_name)')
       .eq('user_discord_id', userDiscordId)
-      .eq('is_connected', true)
-      .single();
+      .eq('is_connected', true);
 
-    if (connectionError || !connection) {
+    if (connectionError || !connections || connections.length === 0) {
       console.error('Failed to get user connection:', connectionError);
       throw new Error('User has not connected their Google Calendar');
     }
+
+    // Find the Google Calendar connection (use the first one if multiple exist)
+    const connection = connections.find(
+      (conn: any) => (conn.available_services as any)?.service_name === 'google_calendar'
+    ) || connections[0];
 
     // Verify it's a Google Calendar connection
     const serviceName = (connection.available_services as any)?.service_name;
