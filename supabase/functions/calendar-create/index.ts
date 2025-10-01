@@ -32,15 +32,21 @@ serve(async (req) => {
       }
     };
 
-    console.log('Posting to n8n webhook:', payload);
+    console.log('Sending to n8n webhook:', payload);
 
-    // Post to n8n webhook
-    const response = await fetch(N8N_WEBHOOK_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify(payload),
+    // Build query parameters
+    const params = new URLSearchParams({
+      userDiscordId: payload.userDiscordId,
+      summary: payload.event.summary,
+      description: payload.event.description,
+      startDateTime: payload.event.startDateTime,
+      endDateTime: payload.event.endDateTime
+    });
+
+    // GET request to n8n webhook
+    const webhookUrl = `${N8N_WEBHOOK_URL}?${params.toString()}`;
+    const response = await fetch(webhookUrl, {
+      method: 'GET',
     });
 
     if (!response.ok) {
