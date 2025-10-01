@@ -10,6 +10,8 @@ import Commands from "./pages/Commands";
 import Servers from "./pages/Servers";
 import Admin from "./pages/Admin";
 import Connections from "./pages/Connections";
+import OAuthSuccess from "./pages/OAuthSuccess";
+import OAuthError from "./pages/OAuthError";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -27,6 +29,8 @@ const App = () => (
           <Route path="/commands" element={<Commands />} />
           <Route path="/servers" element={<Servers />} />
           <Route path="/connections" element={<Connections />} />
+          <Route path="/oauth-success" element={<OAuthSuccess />} />
+          <Route path="/oauth-error" element={<OAuthError />} />
           <Route path="/admin" element={<Admin />} />
           {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
           <Route path="*" element={<NotFound />} />

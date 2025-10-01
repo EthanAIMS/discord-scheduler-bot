@@ -68,134 +68,22 @@ serve(async (req) => {
 
     console.log(`Successfully connected ${userDiscordId} to service ${serviceId}`);
 
-    // Return success page
-    return new Response(`<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Connection Successful</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      padding: 20px;
-    }
-    .container {
-      background: white;
-      padding: 3rem 2rem;
-      border-radius: 20px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-      text-align: center;
-      max-width: 500px;
-      width: 100%;
-      animation: slideUp 0.5s ease-out;
-    }
-    @keyframes slideUp {
-      from { opacity: 0; transform: translateY(30px); }
-      to { opacity: 1; transform: translateY(0); }
-    }
-    .success-icon {
-      font-size: 5rem;
-      margin-bottom: 1.5rem;
-      animation: bounce 0.6s ease-out;
-    }
-    @keyframes bounce {
-      0%, 100% { transform: scale(1); }
-      50% { transform: scale(1.1); }
-    }
-    h1 {
-      color: #667eea;
-      margin-bottom: 1rem;
-      font-size: 2rem;
-      font-weight: 700;
-    }
-    p {
-      color: #666;
-      font-size: 1.1rem;
-      line-height: 1.6;
-      margin-bottom: 2rem;
-    }
-    .close-btn {
-      display: inline-block;
-      padding: 12px 32px;
-      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-      color: white;
-      text-decoration: none;
-      border-radius: 8px;
-      font-weight: 600;
-      transition: transform 0.2s;
-      cursor: pointer;
-      border: none;
-      font-size: 1rem;
-    }
-    .close-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
-    }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="success-icon">✅</div>
-    <h1>Successfully Connected!</h1>
-    <p>Your account has been linked. You can now close this window and return to Discord to use your connected services.</p>
-    <button class="close-btn" onclick="window.close()">Close Window</button>
-  </div>
-</body>
-</html>`, {
-      headers: { "Content-Type": "text/html; charset=utf-8" },
-      status: 200,
+    // Redirect to success page on main app
+    const appUrl = "https://7ae35ca4-f7e8-4f1b-9ca8-3114316bc313.lovableproject.com";
+    return new Response(null, {
+      status: 302,
+      headers: {
+        "Location": `${appUrl}/oauth-success`,
+      },
     });
   } catch (error) {
     console.error("Error in oauth-callback:", error);
-    const errorMessage = error instanceof Error ? error.message : "Unknown error";
-    return new Response(`<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Connection Failed</title>
-  <style>
-    * { margin: 0; padding: 0; box-sizing: border-box; }
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      min-height: 100vh;
-      background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
-      padding: 20px;
-    }
-    .container {
-      background: white;
-      padding: 3rem 2rem;
-      border-radius: 20px;
-      box-shadow: 0 20px 60px rgba(0,0,0,0.3);
-      text-align: center;
-      max-width: 500px;
-      width: 100%;
-    }
-    h1 { color: #f5576c; margin-bottom: 1rem; font-size: 2rem; font-weight: 700; }
-    p { color: #666; font-size: 1.1rem; line-height: 1.6; }
-    .error { font-size: 5rem; margin-bottom: 1.5rem; }
-  </style>
-</head>
-<body>
-  <div class="container">
-    <div class="error">❌</div>
-    <h1>Connection Failed</h1>
-    <p>Something went wrong. Please try again.</p>
-  </div>
-</body>
-</html>`, {
-      headers: { "Content-Type": "text/html; charset=utf-8" },
-      status: 500,
+    const appUrl = "https://7ae35ca4-f7e8-4f1b-9ca8-3114316bc313.lovableproject.com";
+    return new Response(null, {
+      status: 302,
+      headers: {
+        "Location": `${appUrl}/oauth-error`,
+      },
     });
   }
 });
