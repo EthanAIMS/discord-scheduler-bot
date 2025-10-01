@@ -95,14 +95,13 @@ serve(async (req) => {
       throw new Error('User has not connected their Google Calendar');
     }
 
-    // Find the Google Calendar connection (use the first one if multiple exist)
+    // Find the Google Calendar connection (service_name is 'calendar' in the database)
     const connection = connections.find(
-      (conn: any) => (conn.available_services as any)?.service_name === 'google_calendar'
-    ) || connections[0];
+      (conn: any) => (conn.available_services as any)?.service_name === 'calendar'
+    );
 
-    // Verify it's a Google Calendar connection
-    const serviceName = (connection.available_services as any)?.service_name;
-    if (serviceName !== 'google_calendar') {
+    // Verify we found a calendar connection
+    if (!connection) {
       throw new Error('No Google Calendar connection found');
     }
 
