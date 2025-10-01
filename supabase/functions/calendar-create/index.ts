@@ -1,4 +1,5 @@
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2.38.4';
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -57,10 +58,79 @@ serve(async (req) => {
     }
 
     const n8nResponse = await response.json();
-    console.log('Successfully posted to n8n, response:', n8nResponse);
+    console.log('n8n response:', n8nResponse);
+
+    // Check if n8n returned an error
+    if (n8nResponse.error) {
+      console.error('n8n parsing error:', n8nResponse.error);
+      throw new Error(`Date parsing failed: ${n8nResponse.error.message}`);
+    }
+
+    // Get the formatted event from n8n
+    const formattedEvent = n8nResponse.event;
+    if (!formattedEvent) {
+      throw new Error('No event data returned from n8n');
+    }
+
+    // Create Supabase client
+    const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
+    const supabaseKey = Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Get user's Google Calendar connection
+    const { data: connection, error: connectionError } = await supabase
+      .from('user_service_connections')
+      .select('access_token, service_id, available_services(service_name)')
+      .eq('user_discord_id', userDiscordId)
+      .eq('is_connected', true)
+      .single();
+
+    if (connectionError || !connection) {
+      console.error('Failed to get user connection:', connectionError);
+      throw new Error('User has not connected their Google Calendar');
+    }
+
+    // Verify it's a Google Calendar connection
+    const serviceName = (connection.available_services as any)?.service_name;
+    if (serviceName !== 'google_calendar') {
+      throw new Error('No Google Calendar connection found');
+    }
+
+    if (!connection.access_token) {
+      throw new Error('No access token available for Google Calendar');
+    }
+
+    console.log('Creating event in Google Calendar...');
+
+    // Create event in Google Calendar
+    const calendarResponse = await fetch(
+      'https://www.googleapis.com/calendar/v3/calendars/primary/events',
+      {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${connection.access_token}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formattedEvent),
+      }
+    );
+
+    if (!calendarResponse.ok) {
+      const errorText = await calendarResponse.text();
+      console.error('Google Calendar API error:', calendarResponse.status, errorText);
+      throw new Error(`Failed to create calendar event: ${errorText}`);
+    }
+
+    const createdEvent = await calendarResponse.json();
+    console.log('Successfully created event:', createdEvent.id);
 
     return new Response(
-      JSON.stringify({ success: true, message: 'Event data sent to n8n' }),
+      JSON.stringify({ 
+        success: true, 
+        message: 'Event created successfully',
+        eventId: createdEvent.id,
+        eventLink: createdEvent.htmlLink
+      }),
       { 
         headers: { ...corsHeaders, 'Content-Type': 'application/json' },
         status: 200 
