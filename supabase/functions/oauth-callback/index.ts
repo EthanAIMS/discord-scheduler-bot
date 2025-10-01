@@ -72,37 +72,92 @@ serve(async (req) => {
     return new Response(
       `
       <!DOCTYPE html>
-      <html>
+      <html lang="en">
         <head>
+          <meta charset="UTF-8">
+          <meta name="viewport" content="width=device-width, initial-scale=1.0">
           <title>Connection Successful</title>
           <style>
+            * {
+              margin: 0;
+              padding: 0;
+              box-sizing: border-box;
+            }
             body {
-              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
               display: flex;
               justify-content: center;
               align-items: center;
-              height: 100vh;
-              margin: 0;
+              min-height: 100vh;
               background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              padding: 20px;
             }
             .container {
               background: white;
-              padding: 3rem;
-              border-radius: 1rem;
+              padding: 3rem 2rem;
+              border-radius: 20px;
               box-shadow: 0 20px 60px rgba(0,0,0,0.3);
               text-align: center;
               max-width: 500px;
+              width: 100%;
+              animation: slideUp 0.5s ease-out;
             }
-            h1 { color: #667eea; margin-bottom: 1rem; }
-            p { color: #666; font-size: 1.1rem; }
-            .success { font-size: 4rem; margin-bottom: 1rem; }
+            @keyframes slideUp {
+              from {
+                opacity: 0;
+                transform: translateY(30px);
+              }
+              to {
+                opacity: 1;
+                transform: translateY(0);
+              }
+            }
+            .success-icon {
+              font-size: 5rem;
+              margin-bottom: 1.5rem;
+              animation: bounce 0.6s ease-out;
+            }
+            @keyframes bounce {
+              0%, 100% { transform: scale(1); }
+              50% { transform: scale(1.1); }
+            }
+            h1 {
+              color: #667eea;
+              margin-bottom: 1rem;
+              font-size: 2rem;
+              font-weight: 700;
+            }
+            p {
+              color: #666;
+              font-size: 1.1rem;
+              line-height: 1.6;
+              margin-bottom: 2rem;
+            }
+            .close-btn {
+              display: inline-block;
+              padding: 12px 32px;
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+              color: white;
+              text-decoration: none;
+              border-radius: 8px;
+              font-weight: 600;
+              transition: transform 0.2s;
+              cursor: pointer;
+              border: none;
+              font-size: 1rem;
+            }
+            .close-btn:hover {
+              transform: translateY(-2px);
+              box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+            }
           </style>
         </head>
         <body>
           <div class="container">
-            <div class="success">✅</div>
-            <h1>Connected Successfully!</h1>
-            <p>You can close this window and return to Discord.</p>
+            <div class="success-icon">✅</div>
+            <h1>Successfully Connected!</h1>
+            <p>Your account has been linked. You can now close this window and return to Discord to use your connected services.</p>
+            <button class="close-btn" onclick="window.close()">Close Window</button>
           </div>
         </body>
       </html>
