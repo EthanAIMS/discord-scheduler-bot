@@ -11,6 +11,7 @@ import {
   LogOut,
   Bot,
   Shield,
+  Link as LinkIcon,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { cn } from "@/lib/utils";
@@ -89,6 +90,7 @@ const DashboardLayout = ({ children }: DashboardLayoutProps) => {
     { icon: LayoutDashboard, label: "Dashboard", path: "/dashboard" },
     { icon: Terminal, label: "Commands", path: "/commands" },
     { icon: Server, label: "Servers", path: "/servers" },
+    { icon: LinkIcon, label: "Connections", path: "/connections" },
   ];
 
   if (isAdmin) {
