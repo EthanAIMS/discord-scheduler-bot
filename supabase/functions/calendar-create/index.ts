@@ -13,29 +13,40 @@ serve(async (req) => {
   }
 
   try {
-    const { userDiscordId, eventData } = await req.json();
+    // Parse query parameters from the request
+    const url = new URL(req.url);
+    const userDiscordId = url.searchParams.get('userDiscordId');
+    const summary = url.searchParams.get('summary');
+    const description = url.searchParams.get('description') || '';
+    const startDateTime = url.searchParams.get('startDateTime');
+    const endDateTime = url.searchParams.get('endDateTime') || '';
+    
     console.log('Calendar create request received for user:', userDiscordId);
+    console.log('Event details:', { summary, description, startDateTime, endDateTime });
+
+    if (!userDiscordId || !summary || !startDateTime) {
+      throw new Error('Missing required parameters: userDiscordId, summary, startDateTime');
+    }
 
     const N8N_WEBHOOK_URL = Deno.env.get('N8N_WEBHOOK_URL');
     if (!N8N_WEBHOOK_URL) {
       throw new Error('N8N_WEBHOOK_URL not configured');
     }
 
-    // Send only event data to n8n (not userDiscordId - we keep that for later)
-    console.log('Sending event data to n8n:', eventData);
-
     // Build query parameters for n8n
     const params = new URLSearchParams({
-      summary: eventData.summary,
-      description: eventData.description || '',
-      startDateTime: eventData.startDateTime,
-      endDateTime: eventData.endDateTime || ''
+      summary,
+      description,
+      startDateTime,
+      endDateTime
     });
 
-    // GET request to n8n webhook
+    console.log('Sending to n8n webhook with params:', params.toString());
+
+    // POST request to n8n webhook with query parameters
     const webhookUrl = `${N8N_WEBHOOK_URL}?${params.toString()}`;
     const response = await fetch(webhookUrl, {
-      method: 'GET',
+      method: 'POST',
     });
 
     if (!response.ok) {
@@ -55,16 +66,16 @@ serve(async (req) => {
     }
 
     // Extract individual fields from n8n response
-    const { summary, description, dateTimeStart, timeZoneStart, dateTimeEnd, TimeZoneEnd } = n8nResponse;
+    const { summary: parsedSummary, description: parsedDescription, dateTimeStart, timeZoneStart, dateTimeEnd, TimeZoneEnd } = n8nResponse;
     
-    if (!summary || !dateTimeStart || !timeZoneStart) {
+    if (!parsedSummary || !dateTimeStart || !timeZoneStart) {
       throw new Error('Missing required event data from n8n');
     }
 
     // Construct Google Calendar event object
     const formattedEvent = {
-      summary,
-      description: description || '',
+      summary: parsedSummary,
+      description: parsedDescription || '',
       start: {
         dateTime: dateTimeStart,
         timeZone: timeZoneStart
