@@ -19,12 +19,13 @@ jobs:
       - name: Deploy to GCP VM
         uses: appleboy/ssh-action@v1.0.0
         env:
-          GH_PAT: ${{ secrets.GH_PAT }}
+          DISCORD_BOT_TOKEN: ${{ secrets.DISCORD_BOT_TOKEN }}
+          DISCORD_CLIENT_ID: ${{ secrets.DISCORD_CLIENT_ID }}
         with:
           host: 35.236.75.172
           username: ethan
           key: ${{ secrets.GCP_SSH_KEY }}
-          envs: GH_PAT
+          envs: DISCORD_BOT_TOKEN,DISCORD_CLIENT_ID
           script: |
             cd ~/discord-bot
             
@@ -34,6 +35,10 @@ jobs:
             
             # Download latest code from bot directory
             curl -L https://github.com/EthanAIMS/discord-scheduler-bot/archive/refs/heads/main.tar.gz | tar xz --strip-components=2 discord-scheduler-bot-main/bot
+            
+            # Replace placeholders in config.json with actual secrets
+            sed -i "s/DISCORD_BOT_TOKEN_PLACEHOLDER/$DISCORD_BOT_TOKEN/g" config.json
+            sed -i "s/DISCORD_CLIENT_ID_PLACEHOLDER/$DISCORD_CLIENT_ID/g" config.json
             
             # Install dependencies if package.json changed
             npm install
