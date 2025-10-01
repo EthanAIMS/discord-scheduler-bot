@@ -111,16 +111,16 @@ async function handleCalendarCreateCommand(interaction) {
 
     const startTimeInput = new TextInputBuilder()
       .setCustomId('event_start')
-      .setLabel('Start Time (YYYY-MM-DD HH:MM)')
+      .setLabel('Start Time')
       .setStyle(TextInputStyle.Short)
-      .setPlaceholder('2025-10-15 10:00')
+      .setPlaceholder('today 2pm')
       .setRequired(true);
 
     const endTimeInput = new TextInputBuilder()
       .setCustomId('event_end')
-      .setLabel('End Time (YYYY-MM-DD HH:MM)')
+      .setLabel('End Time')
       .setStyle(TextInputStyle.Short)
-      .setPlaceholder('2025-10-15 11:00')
+      .setPlaceholder('6pm')
       .setRequired(true);
 
     const firstRow = new ActionRowBuilder().addComponents(titleInput);
@@ -157,36 +157,14 @@ client.on('interactionCreate', async interaction => {
 
         console.log('Calendar event modal submitted:', { title, startTime, endTime });
 
-        // Parse the time format and convert to ISO 8601
-        const parseDateTime = (dateTimeStr) => {
-          // Expected format: "2025-10-15 10:00"
-          const [datePart, timePart] = dateTimeStr.trim().split(' ');
-          if (!datePart || !timePart) {
-            throw new Error(`Invalid date/time format: "${dateTimeStr}". Please use format: YYYY-MM-DD HH:MM`);
-          }
-          return `${datePart}T${timePart}:00`;
-        };
-
-        let startDateTime, endDateTime;
-        try {
-          startDateTime = parseDateTime(startTime);
-          endDateTime = parseDateTime(endTime);
-        } catch (parseError) {
-          await interaction.editReply({
-            content: `❌ ${parseError.message}`,
-            ephemeral: true
-          });
-          return;
-        }
-
         const eventData = {
           summary: title,
           description: description,
-          startDateTime: startDateTime,
-          endDateTime: endDateTime
+          startDateTime: startTime,
+          endDateTime: endTime
         };
 
-        console.log('Parsed event data:', eventData);
+        console.log('Event data to send:', eventData);
 
         // Call edge function to post to n8n
         const response = await fetch(`${config.supabaseUrl}/functions/v1/calendar-create`, {

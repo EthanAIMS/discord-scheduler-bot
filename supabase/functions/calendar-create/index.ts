@@ -21,20 +21,14 @@ serve(async (req) => {
     }
 
     // Prepare the payload for n8n
-    // This structure is what will eventually be needed to create a Google Calendar event
+    // n8n will handle parsing the date/time strings
     const payload = {
       userDiscordId,
       event: {
-        summary: eventData.summary,        // Event title
-        description: eventData.description, // Event description
-        start: {
-          dateTime: eventData.startDateTime, // ISO 8601 format: "2025-10-15T10:00:00"
-          timeZone: "America/Los_Angeles"
-        },
-        end: {
-          dateTime: eventData.endDateTime,   // ISO 8601 format: "2025-10-15T11:00:00"
-          timeZone: "America/Los_Angeles"
-        }
+        summary: eventData.summary,
+        description: eventData.description,
+        startDateTime: eventData.startDateTime,
+        endDateTime: eventData.endDateTime
       }
     };
 
