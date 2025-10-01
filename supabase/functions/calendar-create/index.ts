@@ -43,10 +43,10 @@ serve(async (req) => {
 
     console.log('Sending to n8n webhook with params:', params.toString());
 
-    // POST request to n8n webhook with query parameters
+    // GET request to n8n webhook with query parameters
     const webhookUrl = `${N8N_WEBHOOK_URL}?${params.toString()}`;
     const response = await fetch(webhookUrl, {
-      method: 'POST',
+      method: 'GET',
     });
 
     if (!response.ok) {
