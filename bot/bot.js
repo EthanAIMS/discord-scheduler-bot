@@ -161,15 +161,32 @@ client.on('interactionCreate', async interaction => {
         const parseDateTime = (dateTimeStr) => {
           // Expected format: "2025-10-15 10:00"
           const [datePart, timePart] = dateTimeStr.trim().split(' ');
+          if (!datePart || !timePart) {
+            throw new Error(`Invalid date/time format: "${dateTimeStr}". Please use format: YYYY-MM-DD HH:MM`);
+          }
           return `${datePart}T${timePart}:00`;
         };
+
+        let startDateTime, endDateTime;
+        try {
+          startDateTime = parseDateTime(startTime);
+          endDateTime = parseDateTime(endTime);
+        } catch (parseError) {
+          await interaction.editReply({
+            content: `❌ ${parseError.message}`,
+            ephemeral: true
+          });
+          return;
+        }
 
         const eventData = {
           summary: title,
           description: description,
-          startDateTime: parseDateTime(startTime),
-          endDateTime: parseDateTime(endTime)
+          startDateTime: startDateTime,
+          endDateTime: endDateTime
         };
+
+        console.log('Parsed event data:', eventData);
 
         // Call edge function to post to n8n
         const response = await fetch(`${config.supabaseUrl}/functions/v1/calendar-create`, {

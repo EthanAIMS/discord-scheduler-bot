@@ -50,11 +50,14 @@ serve(async (req) => {
     });
 
     if (!response.ok) {
-      console.error('n8n webhook error:', response.status, await response.text());
-      throw new Error(`n8n webhook failed with status ${response.status}`);
+      const errorText = await response.text();
+      console.error('n8n webhook error:', response.status, errorText);
+      console.error('Webhook URL used:', N8N_WEBHOOK_URL);
+      throw new Error(`n8n webhook failed with status ${response.status}: ${errorText}`);
     }
 
-    console.log('Successfully posted to n8n');
+    const n8nResponse = await response.json();
+    console.log('Successfully posted to n8n, response:', n8nResponse);
 
     return new Response(
       JSON.stringify({ success: true, message: 'Event data sent to n8n' }),
