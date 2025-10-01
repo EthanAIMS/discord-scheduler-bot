@@ -65,18 +65,24 @@ client.once('ready', async () => {
     const commands = await fetchCommands();
     
     // Clear all existing commands first to remove any old/stale commands
-    console.log('Clearing old commands...');
+    console.log('Clearing old guild commands...');
     await rest.put(
       Routes.applicationGuildCommands(config.clientId, config.guildId),
       { body: [] }
     );
     
-    // Register fresh commands from database
+    console.log('Clearing old global commands...');
+    await rest.put(
+      Routes.applicationCommands(config.clientId),
+      { body: [] }
+    );
+    
+    // Register fresh commands from database (guild-specific only)
     await rest.put(
       Routes.applicationGuildCommands(config.clientId, config.guildId),
       { body: commands }
     );
-    console.log(`${commands.length} commands registered!`);
+    console.log(`${commands.length} commands registered to guild!`);
   } catch (error) {
     console.error(error);
   }
