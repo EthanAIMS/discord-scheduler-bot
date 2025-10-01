@@ -1,4 +1,4 @@
-import { Client, GatewayIntentBits, REST, Routes, ActionRowBuilder, ButtonBuilder, ButtonStyle } from 'discord.js';
+import { Client, GatewayIntentBits, REST, Routes, ActionRowBuilder, ButtonBuilder, ButtonStyle, ModalBuilder, TextInputBuilder, TextInputStyle } from 'discord.js';
 import { readFileSync } from 'fs';
 
 const config = JSON.parse(readFileSync('./config.json'));
@@ -88,7 +88,133 @@ client.once('ready', async () => {
   }
 });
 
+async function handleCalendarCreateCommand(interaction) {
+  try {
+    console.log(`User ${interaction.user.id} requested calendar-create command`);
+
+    // Create modal for event details
+    const modal = new ModalBuilder()
+      .setCustomId('calendar_event_modal')
+      .setTitle('Create Calendar Event');
+
+    const titleInput = new TextInputBuilder()
+      .setCustomId('event_title')
+      .setLabel('Event Title')
+      .setStyle(TextInputStyle.Short)
+      .setRequired(true);
+
+    const descriptionInput = new TextInputBuilder()
+      .setCustomId('event_description')
+      .setLabel('Event Description')
+      .setStyle(TextInputStyle.Paragraph)
+      .setRequired(false);
+
+    const startTimeInput = new TextInputBuilder()
+      .setCustomId('event_start')
+      .setLabel('Start Time (YYYY-MM-DD HH:MM)')
+      .setStyle(TextInputStyle.Short)
+      .setPlaceholder('2025-10-15 10:00')
+      .setRequired(true);
+
+    const endTimeInput = new TextInputBuilder()
+      .setCustomId('event_end')
+      .setLabel('End Time (YYYY-MM-DD HH:MM)')
+      .setStyle(TextInputStyle.Short)
+      .setPlaceholder('2025-10-15 11:00')
+      .setRequired(true);
+
+    const firstRow = new ActionRowBuilder().addComponents(titleInput);
+    const secondRow = new ActionRowBuilder().addComponents(descriptionInput);
+    const thirdRow = new ActionRowBuilder().addComponents(startTimeInput);
+    const fourthRow = new ActionRowBuilder().addComponents(endTimeInput);
+
+    modal.addComponents(firstRow, secondRow, thirdRow, fourthRow);
+
+    await interaction.showModal(modal);
+
+  } catch (error) {
+    console.error('Error in calendar-create command:', error);
+    if (!interaction.replied) {
+      await interaction.reply({
+        content: 'Failed to show calendar event form.',
+        ephemeral: true
+      });
+    }
+  }
+}
+
 client.on('interactionCreate', async interaction => {
+  // Handle modal submissions
+  if (interaction.isModalSubmit()) {
+    if (interaction.customId === 'calendar_event_modal') {
+      try {
+        await interaction.deferReply({ ephemeral: true });
+
+        const title = interaction.fields.getTextInputValue('event_title');
+        const description = interaction.fields.getTextInputValue('event_description') || '';
+        const startTime = interaction.fields.getTextInputValue('event_start');
+        const endTime = interaction.fields.getTextInputValue('event_end');
+
+        console.log('Calendar event modal submitted:', { title, startTime, endTime });
+
+        // Parse the time format and convert to ISO 8601
+        const parseDateTime = (dateTimeStr) => {
+          // Expected format: "2025-10-15 10:00"
+          const [datePart, timePart] = dateTimeStr.trim().split(' ');
+          return `${datePart}T${timePart}:00`;
+        };
+
+        const eventData = {
+          summary: title,
+          description: description,
+          startDateTime: parseDateTime(startTime),
+          endDateTime: parseDateTime(endTime)
+        };
+
+        // Call edge function to post to n8n
+        const response = await fetch(`${config.supabaseUrl}/functions/v1/calendar-create`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${config.supabaseAnonKey}`
+          },
+          body: JSON.stringify({
+            userDiscordId: interaction.user.id,
+            eventData: eventData
+          })
+        });
+
+        const result = await response.json();
+
+        if (result.success) {
+          await interaction.editReply({
+            content: `✅ Event "${title}" has been sent to n8n for processing!`,
+            ephemeral: true
+          });
+        } else {
+          await interaction.editReply({
+            content: `❌ Failed to create event: ${result.error}`,
+            ephemeral: true
+          });
+        }
+
+      } catch (error) {
+        console.error('Error handling calendar modal submission:', error);
+        if (!interaction.replied && !interaction.deferred) {
+          await interaction.reply({
+            content: 'An error occurred while processing your event.',
+            ephemeral: true
+          });
+        } else {
+          await interaction.editReply({
+            content: 'An error occurred while processing your event.',
+            ephemeral: true
+          });
+        }
+      }
+    }
+  }
+
   if (interaction.isChatInputCommand()) {
     // Check if bot is active before processing
     if (!isActive) {
@@ -141,6 +267,10 @@ client.on('interactionCreate', async interaction => {
       } catch (error) {
         await interaction.reply('Failed to fetch commands');
       }
+      break;
+
+    case 'calendar-create':
+      await handleCalendarCreateCommand(interaction);
       break;
 
     case 'connect':
