@@ -118,10 +118,10 @@ async function handleCalendarCreateCommand(interaction) {
 
     const endTimeInput = new TextInputBuilder()
       .setCustomId('event_end')
-      .setLabel('End Time')
+      .setLabel('End Time (optional)')
       .setStyle(TextInputStyle.Short)
       .setPlaceholder('6pm')
-      .setRequired(true);
+      .setRequired(false);
 
     const firstRow = new ActionRowBuilder().addComponents(titleInput);
     const secondRow = new ActionRowBuilder().addComponents(descriptionInput);
@@ -153,7 +153,7 @@ client.on('interactionCreate', async interaction => {
         const title = interaction.fields.getTextInputValue('event_title');
         const description = interaction.fields.getTextInputValue('event_description') || '';
         const startTime = interaction.fields.getTextInputValue('event_start');
-        const endTime = interaction.fields.getTextInputValue('event_end');
+        const endTime = interaction.fields.getTextInputValue('event_end') || '';
 
         console.log('Calendar event modal submitted:', { title, startTime, endTime });
 
