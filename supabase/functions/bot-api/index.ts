@@ -112,6 +112,62 @@ serve(async (req) => {
         );
       }
 
+      case "services": {
+        // Get all active services
+        const { data, error } = await supabaseClient
+          .from("available_services")
+          .select("*")
+          .eq("is_active", true)
+          .order("service_name");
+
+        if (error) throw error;
+
+        return new Response(JSON.stringify({ services: data }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      case "user-connections": {
+        // Get user's service connections
+        const { userDiscordId } = await req.json();
+        
+        const { data, error } = await supabaseClient
+          .from("user_service_connections")
+          .select(`
+            *,
+            service:available_services(*)
+          `)
+          .eq("user_discord_id", userDiscordId);
+
+        if (error) throw error;
+
+        return new Response(JSON.stringify({ connections: data }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
+      case "disconnect-service": {
+        // Disconnect a service
+        const { userDiscordId, serviceId } = await req.json();
+
+        const { error } = await supabaseClient
+          .from("user_service_connections")
+          .update({
+            is_connected: false,
+            access_token: null,
+            refresh_token: null,
+            token_expires_at: null,
+          })
+          .eq("user_discord_id", userDiscordId)
+          .eq("service_id", serviceId);
+
+        if (error) throw error;
+
+        return new Response(JSON.stringify({ success: true }), {
+          headers: { ...corsHeaders, "Content-Type": "application/json" },
+        });
+      }
+
       default:
         return new Response(JSON.stringify({ error: "Endpoint not found" }), {
           status: 404,

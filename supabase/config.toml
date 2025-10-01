@@ -1,1 +1,10 @@
 project_id = "fmzmgwswcurahxbpygpw"
+
+[functions.oauth-init]
+verify_jwt = false
+
+[functions.oauth-callback]
+verify_jwt = false
+
+[functions.bot-api]
+verify_jwt = false

@@ -1,0 +1,162 @@
+import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
+import { createClient } from "https://esm.sh/@supabase/supabase-js@2.58.0";
+
+serve(async (req) => {
+  try {
+    const url = new URL(req.url);
+    const code = url.searchParams.get("code");
+    const state = url.searchParams.get("state");
+
+    if (!code || !state) {
+      return new Response("Missing code or state", { status: 400 });
+    }
+
+    const { serviceId, userDiscordId } = JSON.parse(state);
+
+    const clientId = Deno.env.get("GOOGLE_CLIENT_ID")!;
+    const clientSecret = Deno.env.get("GOOGLE_CLIENT_SECRET")!;
+    const supabaseUrl = Deno.env.get("SUPABASE_URL")!;
+    const redirectUri = `${supabaseUrl}/functions/v1/oauth-callback`;
+
+    // Exchange code for tokens
+    const tokenResponse = await fetch("https://oauth2.googleapis.com/token", {
+      method: "POST",
+      headers: { "Content-Type": "application/x-www-form-urlencoded" },
+      body: new URLSearchParams({
+        code,
+        client_id: clientId,
+        client_secret: clientSecret,
+        redirect_uri: redirectUri,
+        grant_type: "authorization_code",
+      }),
+    });
+
+    if (!tokenResponse.ok) {
+      const errorText = await tokenResponse.text();
+      console.error("Token exchange failed:", errorText);
+      throw new Error("Failed to exchange code for tokens");
+    }
+
+    const tokens = await tokenResponse.json();
+    const { access_token, refresh_token, expires_in } = tokens;
+
+    // Calculate expiration
+    const expiresAt = new Date(Date.now() + expires_in * 1000);
+
+    const supabaseKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY")!;
+    const supabase = createClient(supabaseUrl, supabaseKey);
+
+    // Store or update connection
+    const { error: upsertError } = await supabase
+      .from("user_service_connections")
+      .upsert({
+        user_discord_id: userDiscordId,
+        service_id: serviceId,
+        is_connected: true,
+        access_token,
+        refresh_token,
+        token_expires_at: expiresAt.toISOString(),
+        connected_at: new Date().toISOString(),
+      }, {
+        onConflict: 'user_discord_id,service_id'
+      });
+
+    if (upsertError) {
+      console.error("Database error:", upsertError);
+      throw new Error("Failed to store connection");
+    }
+
+    console.log(`Successfully connected ${userDiscordId} to service ${serviceId}`);
+
+    // Return success page
+    return new Response(
+      `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Connection Successful</title>
+          <style>
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              height: 100vh;
+              margin: 0;
+              background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            }
+            .container {
+              background: white;
+              padding: 3rem;
+              border-radius: 1rem;
+              box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+              text-align: center;
+              max-width: 500px;
+            }
+            h1 { color: #667eea; margin-bottom: 1rem; }
+            p { color: #666; font-size: 1.1rem; }
+            .success { font-size: 4rem; margin-bottom: 1rem; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="success">✅</div>
+            <h1>Connected Successfully!</h1>
+            <p>You can close this window and return to Discord.</p>
+          </div>
+        </body>
+      </html>
+      `,
+      {
+        headers: { "Content-Type": "text/html" },
+        status: 200,
+      }
+    );
+  } catch (error) {
+    console.error("Error in oauth-callback:", error);
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    return new Response(
+      `
+      <!DOCTYPE html>
+      <html>
+        <head>
+          <title>Connection Failed</title>
+          <style>
+            body {
+              font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+              display: flex;
+              justify-content: center;
+              align-items: center;
+              height: 100vh;
+              margin: 0;
+              background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+            }
+            .container {
+              background: white;
+              padding: 3rem;
+              border-radius: 1rem;
+              box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+              text-align: center;
+              max-width: 500px;
+            }
+            h1 { color: #f5576c; margin-bottom: 1rem; }
+            p { color: #666; font-size: 1.1rem; }
+            .error { font-size: 4rem; margin-bottom: 1rem; }
+          </style>
+        </head>
+        <body>
+          <div class="container">
+            <div class="error">❌</div>
+            <h1>Connection Failed</h1>
+            <p>Something went wrong. Please try again.</p>
+          </div>
+        </body>
+      </html>
+      `,
+      {
+        headers: { "Content-Type": "text/html" },
+        status: 500,
+      }
+    );
+  }
+});
