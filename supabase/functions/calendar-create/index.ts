@@ -13,34 +13,23 @@ serve(async (req) => {
   }
 
   try {
-    // Parse query parameters from GET request
-    const url = new URL(req.url);
-    const userDiscordId = url.searchParams.get('userDiscordId');
-    const inputSummary = url.searchParams.get('summary');
-    const inputDescription = url.searchParams.get('description') || '';
-    const inputStartDateTime = url.searchParams.get('startDateTime');
-    const inputEndDateTime = url.searchParams.get('endDateTime') || '';
-
+    const { userDiscordId, eventData } = await req.json();
     console.log('Calendar create request received for user:', userDiscordId);
-
-    if (!userDiscordId || !inputSummary || !inputStartDateTime) {
-      throw new Error('Missing required parameters: userDiscordId, summary, and startDateTime');
-    }
 
     const N8N_WEBHOOK_URL = Deno.env.get('N8N_WEBHOOK_URL');
     if (!N8N_WEBHOOK_URL) {
       throw new Error('N8N_WEBHOOK_URL not configured');
     }
 
-    console.log('Sending to n8n webhook:', { userDiscordId, inputSummary, inputDescription, inputStartDateTime, inputEndDateTime });
+    // Send only event data to n8n (not userDiscordId - we keep that for later)
+    console.log('Sending event data to n8n:', eventData);
 
     // Build query parameters for n8n
     const params = new URLSearchParams({
-      userDiscordId,
-      summary: inputSummary,
-      description: inputDescription,
-      startDateTime: inputStartDateTime,
-      endDateTime: inputEndDateTime
+      summary: eventData.summary,
+      description: eventData.description || '',
+      startDateTime: eventData.startDateTime,
+      endDateTime: eventData.endDateTime || ''
     });
 
     // GET request to n8n webhook
