@@ -86,7 +86,7 @@ serve(async (req) => {
     // Get user's Google Calendar connection
     const { data: connections, error: connectionError } = await supabase
       .from('user_service_connections')
-      .select('access_token, service_id, available_services(service_name)')
+      .select('id, access_token, refresh_token, token_expires_at, service_id, available_services(service_name)')
       .eq('user_discord_id', userDiscordId)
       .eq('is_connected', true);
 
@@ -109,6 +109,48 @@ serve(async (req) => {
       throw new Error('No access token available for Google Calendar');
     }
 
+    // Check if token is expired and refresh if needed
+    let accessToken = connection.access_token;
+    const tokenExpiresAt = new Date(connection.token_expires_at);
+    const now = new Date();
+    
+    if (tokenExpiresAt <= now && connection.refresh_token) {
+      console.log('Access token expired, refreshing...');
+      
+      const GOOGLE_CLIENT_ID = Deno.env.get('GOOGLE_CLIENT_ID');
+      const GOOGLE_CLIENT_SECRET = Deno.env.get('GOOGLE_CLIENT_SECRET');
+      
+      const refreshResponse = await fetch('https://oauth2.googleapis.com/token', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+        body: new URLSearchParams({
+          client_id: GOOGLE_CLIENT_ID!,
+          client_secret: GOOGLE_CLIENT_SECRET!,
+          refresh_token: connection.refresh_token,
+          grant_type: 'refresh_token'
+        })
+      });
+      
+      if (!refreshResponse.ok) {
+        throw new Error('Failed to refresh access token');
+      }
+      
+      const refreshData = await refreshResponse.json();
+      accessToken = refreshData.access_token;
+      
+      // Update token in database
+      const newExpiresAt = new Date(now.getTime() + (refreshData.expires_in * 1000));
+      await supabase
+        .from('user_service_connections')
+        .update({
+          access_token: accessToken,
+          token_expires_at: newExpiresAt.toISOString()
+        })
+        .eq('id', connection.id);
+      
+      console.log('Token refreshed successfully');
+    }
+
     console.log('Creating event in Google Calendar...');
 
     // Create event in Google Calendar
@@ -117,7 +159,7 @@ serve(async (req) => {
       {
         method: 'POST',
         headers: {
-          'Authorization': `Bearer ${connection.access_token}`,
+          'Authorization': `Bearer ${accessToken}`,
           'Content-Type': 'application/json',
         },
         body: JSON.stringify(formattedEvent),
