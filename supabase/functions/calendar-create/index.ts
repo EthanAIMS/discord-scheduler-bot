@@ -66,11 +66,28 @@ serve(async (req) => {
       throw new Error(`Date parsing failed: ${n8nResponse.error.message}`);
     }
 
-    // Get the formatted event from n8n
-    const formattedEvent = n8nResponse.event;
-    if (!formattedEvent) {
-      throw new Error('No event data returned from n8n');
+    // Extract individual fields from n8n response
+    const { summary, description, dateTimeStart, timeZoneStart, dateTimeEnd, TimeZoneEnd } = n8nResponse;
+    
+    if (!summary || !dateTimeStart || !timeZoneStart) {
+      throw new Error('Missing required event data from n8n');
     }
+
+    // Construct Google Calendar event object
+    const formattedEvent = {
+      summary,
+      description: description || '',
+      start: {
+        dateTime: dateTimeStart,
+        timeZone: timeZoneStart
+      },
+      end: {
+        dateTime: dateTimeEnd,
+        timeZone: TimeZoneEnd
+      }
+    };
+
+    console.log('Constructed Google Calendar event:', formattedEvent);
 
     // Create Supabase client
     const supabaseUrl = Deno.env.get('SUPABASE_URL')!;
