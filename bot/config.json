@@ -1,0 +1,7 @@
+{
+  "token": "DISCORD_BOT_TOKEN_PLACEHOLDER",
+  "clientId": "DISCORD_CLIENT_ID_PLACEHOLDER",
+  "guildId": "1419498733518983170",
+  "supabaseUrl": "https://fmzmgwswcurahxbpygpw.supabase.co",
+  "supabaseKey": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZtem1nd3N3Y3VyYWh4YnB5Z3B3Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTkyMDQ2NjQsImV4cCI6MjA3NDc4MDY2NH0.Z6FcmQySBvFjNEvSNn_j3wM0J2y46q01sHtJAP-YkO8"
+}
